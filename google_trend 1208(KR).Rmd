@@ -1,0 +1,1112 @@
+---
+title: "구글트렌드 프리뷰 분석기"
+author: ""
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+
+
+```{r global, include=FALSE}
+# 패키지 설치 ----------------------------------------------------------------------
+packages = c("highcharter","gtrendsR","lubridate","dplyr","stringr","forecast","viridisLite","DT","ggplot2","shinydashboard","shiny","readxl","knitr")#,'shinyTree','shinyDND')
+package.check <- lapply(packages, FUN = function(x) {
+  if (!require(x, character.only = TRUE)) {
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)}})
+```
+
+```{r}
+
+# thm <- 
+#   hc_theme(
+#     colors = c("#1a6ecc", "#434348", "#90ed7d"),
+#     chart = list(
+#       backgroundColor = "transparent",
+#       style = list(fontFamily = "Source Sans Pro")),
+#     xAxis = list( gridLineWidth = 1)
+#   )
+# 
+# data("categories")
+
+thm <- hc_theme(
+  colors = c("red", "green", "blue"),
+  chart = list(
+    backgroundColor = "#e9ebdd"
+  ),
+  title = list(
+    style = list(
+      color = "#333333",
+      fontFamily = "Erica One"
+    )
+  ))
+
+
+data("categories")
+```
+
+
+
+기본 그래프 
+=======================================================================
+
+```{r}
+# shiny reactive objects
+# 분할x
+gtrends_rct<- eventReactive(input$button,{
+# google trends query
+gtrends(input$text,
+        geo=input$nation,
+        gprop = "web",
+        category= categories[categories$name==input$category,"id"],
+        time="today+5-y")
+})
+
+
+
+name_input_rct <-eventReactive(input$button,{
+if(input$nation == "JP"){
+name_input <- "name"
+} else {
+name_input <- "woename"  
+}   
+})
+  
+# interest over the time, month average  
+ts_rct <- eventReactive(input$button,{
+gp <-  
+  gtrends_rct()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+
+# data_forecast_rct <- eventReactive(input$button,{
+# ts_rct() %>%
+#   forecast(level = 90) %>%
+#   data.frame() %>%
+#   mutate(date = row.names(.)) %>%
+#   select(date,everything())
+#  })
+```
+
+Column{.sidebar}
+-----------------------------------------------------------------------
+<!-- Data Select -->
+
+
+```{r}
+#Input widget
+
+selectInput("nation",
+            h4("1. 국가선택"),
+            choices = list("한국"="KR","일본" = "JP", "태국"= "TW", "미국"="US",
+                    "홍콩"="HK","태국"="TH", "베트남"="VN", 
+                    "필리핀"= "PH"),
+            selected = 1)
+
+textInput("text",
+          h4("2. 키워드 입력"),
+          value = "")  
+
+
+selectInput("category", label = h4("4. 카테고리 선택"),
+            choices = c("전체 카테고리"= "All categories",
+                        "여행" = "Travel"),
+             selected = "All categories")
+
+h4("press, 'Go'")            
+actionButton("button", "Go")
+```
+
+
+Row {data-height=800}
+------------------------
+
+### 싱글 그래프
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+4분할 그래프_정보
+=======================================================================
+
+```{r}
+# shiny reactive objects
+# 4Divisions Graph_Information
+gtrends_rct_1 <- eventReactive(input$button_1,{
+# google trends query
+gtrends(input$text_1,
+        geo=input$nation_1,
+        gprop = "web",
+        category= categories[categories$name==input$category_1,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct2_1 <- eventReactive(input$button_1,{
+# google trends query
+gtrends(input$text2_1,
+        geo=input$nation_1,
+        gprop = "web",
+        category= categories[categories$name==input$category_1,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct3_1 <- eventReactive(input$button_1,{
+# google trends query
+gtrends(input$text3_1,
+        geo=input$nation_1,
+        gprop = "web",
+        category= categories[categories$name==input$category_1,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct4_1 <- eventReactive(input$button_1,{
+# google trends query
+gtrends(input$text4_1,
+        geo=input$nation_1,
+        gprop = "web",
+        category= categories[categories$name==input$category_1,"id"],
+        time="today+5-y")
+})
+
+
+name_input_rct <-eventReactive(input$button_1,{
+if(input$nation == "JP"){
+name_input <- "name"
+} else {
+name_input <- "woename"  
+}   
+})
+  
+# interest over the time, month average  
+ts_rct_1 <- eventReactive(input$button_1,{
+gp <-  
+  gtrends_rct_1()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct2_1 <- eventReactive(input$button_1,{
+gp <-  
+  gtrends_rct2_1()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct3_1 <- eventReactive(input$button_1,{
+gp <-  
+  gtrends_rct3_1()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct4_1 <- eventReactive(input$button_1,{
+gp <-  
+  gtrends_rct4_1()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+# data_forecast_rct <- eventReactive(input$button,{
+# ts_rct() %>%
+#   forecast(level = 90) %>%
+#   data.frame() %>%
+#   mutate(date = row.names(.)) %>%
+#   select(date,everything())
+#  })
+```
+
+Column{.sidebar}
+-----------------------------------------------------------------------
+<!-- Data Select -->
+
+```{r}
+#Input widget
+
+selectInput("nation_1",
+            h4("1. 국가선택"),
+            choices = list("일본" = "JP", "태국"= "TW", "미국"="US",
+                    "홍콩"="HK","태국"="TH", "베트남"="VN", 
+                    "필리핀"= "PH"),
+            selected = 1)
+
+textInput("text_1",
+          h4("2-1. 키워드 입력"),
+          value = "Korea Airport")  
+
+textInput("text2_1",
+          h4("2-2. 키워드 입력"),
+          value = "Korea Hotel")  
+
+textInput("text3_1",
+          h4("2-3. 키워드 입력"),
+          value = "Korea Tourism")  
+
+textInput("text4_1",
+          h4("2-1. 키워드 입력"),
+          value = "Korea Weather")
+
+selectInput("category_1", label = h4("4. 카테고리 선택"),
+            choices = c("전체 카테고리"= "All categories",
+                        "여행" = "Travel"),
+             selected = "All categories")
+
+h4("press, 'Go'")            
+actionButton("button_1", "Go")
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### 키워드_1
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct_1() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_2
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct2_1() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+Row 
+----------------------------------------------------------------------- 
+
+### 키워드_3
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct3_1() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_4
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct4_1() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+4분할 그래프_음식
+=======================================================================
+
+```{r}
+# shiny reactive objects
+# 4 Divisions Graph_Food
+gtrends_rct_2 <- eventReactive(input$button_2,{
+# google trends query
+gtrends(input$text_2,
+        geo=input$nation_2,
+        gprop = "web",
+        category= categories[categories$name==input$category_2,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct2_2 <- eventReactive(input$button_2,{
+# google trends query
+gtrends(input$text2_2,
+        geo=input$nation_2,
+        gprop = "web",
+        category= categories[categories$name==input$category_2,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct3_2 <- eventReactive(input$button_2,{
+# google trends query
+gtrends(input$text3_2,
+        geo=input$nation_2,
+        gprop = "web",
+        category= categories[categories$name==input$category_2,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct4_2 <- eventReactive(input$button_2,{
+# google trends query
+gtrends(input$text4_2,
+        geo=input$nation_2,
+        gprop = "web",
+        category= categories[categories$name==input$category_2,"id"],
+        time="today+5-y")
+})
+
+
+name_input_rct <-eventReactive(input$button_2,{
+if(input$nation == "JP"){
+name_input <- "name"
+} else {
+name_input <- "woename"  
+}   
+})
+  
+# interest over the time, month average  
+ts_rct_2 <- eventReactive(input$button_2,{
+gp <-  
+  gtrends_rct_2()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct2_2 <- eventReactive(input$button_2,{
+gp <-  
+  gtrends_rct2_2()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct3_2 <- eventReactive(input$button_2,{
+gp <-  
+  gtrends_rct3_2()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct4_2 <- eventReactive(input$button_2,{
+gp <-  
+  gtrends_rct4_2()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+# data_forecast_rct <- eventReactive(input$button,{
+# ts_rct() %>%
+#   forecast(level = 90) %>%
+#   data.frame() %>%
+#   mutate(date = row.names(.)) %>%
+#   select(date,everything())
+#  })
+```
+
+Column{.sidebar}
+-----------------------------------------------------------------------
+<!-- Data Select -->
+
+```{r}
+#Input widget
+
+selectInput("nation_2",
+            h4("1. 국가선택"),
+            choices = list("한국"="KR","일본" = "JP", "태국"= "TW", "미국"="US",
+                    "홍콩"="HK","태국"="TH", "베트남"="VN", 
+                    "필리핀"= "PH"),
+            selected = 1)
+
+
+textInput("text_2",
+          h4("2-1. 키워드 입력"),
+          value = "kimchi")  
+
+textInput("text2_2",
+          h4("2-2. 키워드 입력"),
+          value = "Korean food")  
+
+textInput("text3_2",
+          h4("2-3. 키워드 입력"),
+          value = "bingsu")  
+
+textInput("text4_2",
+          h4("2-4. 키워드 입력"),
+          value = "samgyeopsal")
+
+selectInput("category_2", label = h4("4. 카테고리 선택"),
+            choices = c("전체 카테고리"= "All categories",
+                        "여행" = "Travel"),
+             selected = "All categories")
+
+h4("press, 'Go'")            
+actionButton("button_2", "Go")
+
+
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### 키워드_1
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct_2() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_2
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct2_2() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+Row 
+----------------------------------------------------------------------- 
+
+### 키워드_3
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct3_2() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_4
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct4_2() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+4분할 그래프_지역
+=======================================================================
+
+```{r}
+# shiny reactive objects
+# 4 Divisions Graph_Area
+gtrends_rct_3 <- eventReactive(input$button_3,{
+# google trends query
+gtrends(input$text_3,
+        geo=input$nation_3,
+        gprop = "web",
+        category= categories[categories$name==input$category_3,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct2_3 <- eventReactive(input$button_3,{
+# google trends query
+gtrends(input$text2_3,
+        geo=input$nation_3,
+        gprop = "web",
+        category= categories[categories$name==input$category_3,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct3_3 <- eventReactive(input$button_3,{
+# google trends query
+gtrends(input$text3_3,
+        geo=input$nation_3,
+        gprop = "web",
+        category= categories[categories$name==input$category_3,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct4_3 <- eventReactive(input$button_3,{
+# google trends query
+gtrends(input$text4_3,
+        geo=input$nation_3,
+        gprop = "web",
+        category= categories[categories$name==input$category_3,"id"],
+        time="today+5-y")
+})
+
+
+name_input_rct <-eventReactive(input$button_3,{
+if(input$nation == "JP"){
+name_input <- "name"
+} else {
+name_input <- "woename"  
+}   
+})
+  
+# interest over the time, month average  
+ts_rct_3 <- eventReactive(input$button_3,{
+gp <-  
+  gtrends_rct_3()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct2_3 <- eventReactive(input$button_3,{
+gp <-  
+  gtrends_rct2_3()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct3_3 <- eventReactive(input$button_3,{
+gp <-  
+  gtrends_rct3_3()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct4_3 <- eventReactive(input$button_3,{
+gp <-  
+  gtrends_rct4_3()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+# data_forecast_rct <- eventReactive(input$button,{
+# ts_rct() %>%
+#   forecast(level = 90) %>%
+#   data.frame() %>%
+#   mutate(date = row.names(.)) %>%
+#   select(date,everything())
+#  })
+```
+
+Column{.sidebar}
+-----------------------------------------------------------------------
+<!-- Data Select -->
+
+```{r}
+#Input widget
+
+selectInput("nation_3",
+            h4("1. 국가선택"),
+            choices = list("한국"="KR","일본" = "JP", "태국"= "TW", "미국"="US",
+                    "홍콩"="HK","태국"="TH", "베트남"="VN", 
+                    "필리핀"= "PH"),
+            selected = 1)
+
+
+textInput("text_3",
+          h4("2-1. 키워드 입력"),
+          value = "seoul")  
+
+textInput("text2_3",
+          h4("2-2. 키워드 입력"),
+          value = "gangnam")  
+
+textInput("text3_3",
+          h4("2-3. 키워드 입력"),
+          value = "busan")  
+
+textInput("text4_3",
+          h4("2-4. 키워드 입력"),
+          value = "jeju island")
+
+selectInput("category_3", label = h4("4. 카테고리 선택"),
+            choices = c("전체 카테고리"= "All categories",
+                        "여행" = "Travel"),
+             selected = "All categories")
+
+h4("press, 'Go'")            
+actionButton("button_3", "Go")
+
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### 키워드_1
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct_3() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_2
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct2_3() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+Row 
+----------------------------------------------------------------------- 
+
+### 키워드_3  
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct3_3() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_4  
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct4_3() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+4분할 그래프_한류
+=======================================================================
+
+```{r}
+# shiny reactive objects
+# 4 Divisions Graph_Korean Wave
+gtrends_rct_4 <- eventReactive(input$button_4,{
+# google trends query
+gtrends(input$text_4,
+        geo=input$nation_4,
+        gprop = "web",
+        category= categories[categories$name==input$category_4,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct2_4 <- eventReactive(input$button_4,{
+# google trends query
+gtrends(input$text2_4,
+        geo=input$nation_4,
+        gprop = "web",
+        category= categories[categories$name==input$category_4,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct3_4 <- eventReactive(input$button_4,{
+# google trends query
+gtrends(input$text3_4,
+        geo=input$nation_4,
+        gprop = "web",
+        category= categories[categories$name==input$category_4,"id"],
+        time="today+5-y")
+})
+
+gtrends_rct4_4 <- eventReactive(input$button_4,{
+# google trends query
+gtrends(input$text4_4,
+        geo=input$nation_4,
+        gprop = "web",
+        category= categories[categories$name==input$category_4,"id"],
+        time="today+5-y")
+})
+
+
+name_input_rct <-eventReactive(input$button_4,{
+if(input$nation == "JP"){
+name_input <- "name"
+} else {
+name_input <- "woename"  
+}   
+})
+  
+# interest over the time, month average  
+ts_rct_4 <- eventReactive(input$button_4,{
+gp <-  
+  gtrends_rct_4()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct2_4 <- eventReactive(input$button_4,{
+gp <-  
+  gtrends_rct2_4()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct3_4 <- eventReactive(input$button_4,{
+gp <-  
+  gtrends_rct3_4()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+ts_rct4_4 <- eventReactive(input$button_4,{
+gp <-  
+  gtrends_rct4_4()$interest_over_time %>%  
+  select(date,hits) %>%
+  mutate(year = year(date)) %>%
+  mutate(month = month(date,label=T) ) %>%
+  group_by(year,month) %>%
+    summarise(hits = mean(hits)) 
+
+sm <- gp$month[1] # starting month 
+
+sy <- gp$year[1] # starting year
+
+ts(gp$hits,start=c(sy,sm),freq=12)
+
+})
+
+# data_forecast_rct <- eventReactive(input$button,{
+# ts_rct() %>%
+#   forecast(level = 90) %>%
+#   data.frame() %>%
+#   mutate(date = row.names(.)) %>%
+#   select(date,everything())
+#  })
+```
+
+Column{.sidebar}
+-----------------------------------------------------------------------
+<!-- Data Select -->
+
+```{r}
+#Input widget
+
+selectInput("nation_4",
+            h4("1. 국가선택"),
+            choices = list("한국"="KR", "일본" = "JP", "태국"= "TW", "미국"="US",
+                    "홍콩"="HK","태국"="TH", "베트남"="VN", 
+                    "필리핀"= "PH"),
+            selected = 1)
+
+
+textInput("text_4",
+          h4("2-1. 키워드 입력"),
+          value = "korean drama")  
+
+textInput("text2_4",
+          h4("2-2. 키워드 입력"),
+          value = "korean movies")  
+
+textInput("text3_4",
+          h4("2-3. 키워드 입력"),
+          value = "K-POP")  
+
+textInput("text4_4",
+          h4("2-4. 키워드 입력"),
+          value = "Korean entertainment")
+
+selectInput("category_4", label = h4("4. 카테고리 선택"),
+            choices = c("전체 카테고리"= "All categories",
+                        "여행" = "Travel"),
+             selected = "All categories")
+
+h4("press, 'Go'")            
+actionButton("button_4", "Go")
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### 키워드_1
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct_4() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_2
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct2_4() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+Row 
+----------------------------------------------------------------------- 
+
+### 키워드_3
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct3_4() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+### 키워드_4
+
+```{r}
+renderHighchart({
+# time series plot + forecast
+ts_rct4_4() %>% 
+  #forecast(level = 90) %>% 
+  hchart() %>% 
+  hc_add_theme(thm)
+
+})
+```
+
+
+키워드
+=======================================================================
+
+Row {.tabset}
+------------------------ 
+### 한글 키워드
+```{r}
+# file.choose()
+DATA = read_xlsx("C:\\R\\keyword-english(KR).xlsx")
+kable(head(DATA,4),
+      caption = "영어 키워드 카테고리",
+      align=c("c","c","c","c"))
+```
+
+
+### TOP50 키워드
+```{r}
+DATA1 = read_xlsx("C:\\R\\keyword top50(KR).xlsx")
+kable(head(DATA1, n=26),
+      caption = "영어 키워드 TOP50",
+      align=c("c","c","c","c","c","c","c","c"))
+```
+
+### 사전, 번역기 활용
+
+번역기: https://translate.google.co.kr/?hl=ko
+<hr>
+사전: https://dict.naver.com/
+
+
+출처
+=======================================================================
+
+Row {.tabset}
+------------------------ 
+### 저자 및 프로필
+ 
+저자: Alessio Passalacqua
+<hr>
+프로필: https://it.linkedin.com/in/alessiopassalacqua
+<hr>
+Github: https://github.com/alessiopassalacqua
+
+### 출처 원본
+
+![google trends it](https://user-images.githubusercontent.com/89954934/144160293-a691f116-11ef-4b1a-97ec-149009f4af0e.png)
